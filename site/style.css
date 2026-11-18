@@ -79,3 +79,10 @@ button{border:1px solid var(--accent);border-radius:5px;background:white;color:v
 .edition .story-lead h3{max-width:36ch;font-size:clamp(1.85rem,5vw,3.15rem)}
 .story-lead p{max-width:68ch}
 @media(max-width:660px){.edition .cover{grid-template-columns:1fr}.cover-moves{padding-top:.5rem}}
+
+.share-controls{display:flex;flex-wrap:wrap;align-items:center;gap:.65rem;margin-top:1rem}
+.share-controls button{margin:0;font-size:.85rem;font-weight:650;background:transparent}
+.share-controls button:hover{background:#e6eee4}
+.share-controls input{max-width:min(100%,28rem)}
+.share-controls input[hidden]{display:none}
+.share-controls span{font-size:.85rem;color:var(--accent)}
