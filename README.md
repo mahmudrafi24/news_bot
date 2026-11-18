@@ -30,7 +30,7 @@ and reads these same frontend files on Oracle when exporting published stories.
 
 - **Cloudflare Workers** — connect this repository in Workers Builds and use
   `npx wrangler deploy`. The committed Wrangler config targets the existing
-  `newspaper-dashboard` Worker and deploys only `site/`.
+  `notasmuchhyped` Worker and deploys only `site/`.
 - **Cloudflare Pages** — use `sh build-pages.sh` and set the output directory
   to `public`.
 
