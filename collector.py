@@ -1,3 +1,4 @@
+import argparse
 from contextlib import closing
 from datetime import timedelta
 from email.utils import parsedate_to_datetime
@@ -21,7 +22,8 @@ DESKS = {
     "Commodities": '"oil prices" OR "gold prices" OR "commodity markets"',
     "Crypto": '"bitcoin market" OR "crypto market"',
 }
-MAX_PER_DESK = 3
+MAX_PER_DESK = 5
+TARGET_STORIES = 10
 
 
 def collect(db):
@@ -51,7 +53,7 @@ def feed_stories(desk, params, known):
             continue
         try:
             reported = parsedate_to_datetime(item.findtext("pubDate", ""))
-            if reported.tzinfo is None or reported < now() - timedelta(hours=48):
+            if reported.tzinfo is None or not now() - timedelta(hours=48) <= reported <= now():
                 continue
         except (TypeError, ValueError, OverflowError):
             continue
@@ -90,7 +92,8 @@ def rewrite(candidates):
         "Return only the specified JSON.\n\n" + json.dumps(list(candidates.values()))
     )
     env = dict(os.environ)
-    env.pop("OPENAI_API_KEY", None)
+    for key in ("OPENAI_API_KEY", "CLOUDFLARE_API_TOKEN", "CLOUDFLARE_API_KEY"):
+        env.pop(key, None)
     with tempfile.TemporaryDirectory(prefix="tech-news-") as directory:
         work = Path(directory)
         (work / "schema.json").write_text(json.dumps(schema))
@@ -116,17 +119,22 @@ def rewrite(candidates):
     return rows
 
 
-def ingest():
+def ingest(publish=False):
     with closing(database()) as db, db, (DATA / "ingest.lock").open("a") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         try:
             candidates, errors = collect(db)
             rows = rewrite(candidates) if candidates else []
+            published = now().isoformat() if publish else None
+            for row in rows:
+                row.update(state="published" if publish else "draft", published=published)
             db.executemany("""
-                INSERT OR IGNORE INTO stories (id, original, source, url, reported, headline, summary, desk)
-                VALUES (:id, :original, :source, :url, :reported, :headline, :summary, :desk)
+                INSERT OR IGNORE INTO stories (id, original, source, url, reported, headline, summary, desk, state, published)
+                VALUES (:id, :original, :source, :url, :reported, :headline, :summary, :desk, :state, :published)
             """, rows)
-            message = f"{len(rows)} drafts added"
+            message = f"{len(rows)} {'stories queued for upload' if publish else 'drafts added'}"
+            if len(rows) < TARGET_STORIES:
+                message += f" · fewer than {TARGET_STORIES} fresh stories available"
             if errors:
                 message += f" · {len(errors)} feeds unavailable"
         except Exception as error:
@@ -138,4 +146,6 @@ def ingest():
 
 
 if __name__ == "__main__":
-    ingest()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--publish", action="store_true", help="Approve stories collected in this run")
+    ingest(publish=parser.parse_args().publish)

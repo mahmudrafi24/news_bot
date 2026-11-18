@@ -1,6 +1,6 @@
 # Market Ledger news bot
 
-Collects new market stories from five US English Google News search feeds for equities, the economy, currencies, commodities and crypto and uses the ChatGPT-authenticated Codex CLI to draft a headline and a short summary from each story's feed metadata. Up to 15 stories are drafted per run. Drafts go to SQLite for review. The bot never publishes.
+Collects new market stories from five US English Google News search feeds for equities, the economy, currencies, commodities and crypto and uses the ChatGPT-authenticated Codex CLI to draft a headline and a short summary from each story's feed metadata. The hourly service targets at least 10 distinct fresh reports when available and collects up to 25 per run. It automatically publishes new stories. A direct run of the collector without `--publish` still creates drafts for manual review.
 
 ## Oracle setup
 
@@ -37,3 +37,25 @@ and reads these same frontend files on Oracle when exporting published stories.
 These builds serve the static edition. If Oracle manages story publishing,
 disable automatic production deployments after the initial deployment. Use the
 editor’s Cloudflare deployment settings to publish future exports from Oracle.
+
+## Hourly publishing
+
+Set `CLOUDFLARE_WORKER_NAME=notasmuchhyped`, the absolute `WRANGLER_BIN`
+path, and authorized Cloudflare credentials in the private
+`~/.config/tech-news/pages.env` file. Use the dashboard setup guide for Pages
+instead. Update both repositories on Oracle, then install the updated service.
+
+```sh
+cp ~/news_bot/systemd/tech-news-ingest.service ~/.config/systemd/user/
+systemctl --user daemon-reload
+systemctl --user restart tech-news-dashboard.service
+systemctl --user start tech-news-ingest.service
+```
+
+The hourly timer invokes the service. Codex prepares new stories from source
+metadata, SQLite commits them, and the service uploads the public export.
+The editor still lets you correct or unpublish a story. Previously saved
+drafts require your approval. A failed upload is reported in the editor and
+can be retried there or on the next successful hourly run. Disable automatic
+production builds when Oracle takes over the public Worker so Git builds
+cannot overwrite its published stories.
