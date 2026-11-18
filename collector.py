@@ -119,20 +119,17 @@ def rewrite(candidates):
     return rows
 
 
-def ingest(publish=False):
+def ingest():
     with closing(database()) as db, db, (DATA / "ingest.lock").open("a") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
         try:
             candidates, errors = collect(db)
             rows = rewrite(candidates) if candidates else []
-            published = now().isoformat() if publish else None
-            for row in rows:
-                row.update(state="published" if publish else "draft", published=published)
             db.executemany("""
-                INSERT OR IGNORE INTO stories (id, original, source, url, reported, headline, summary, desk, state, published)
-                VALUES (:id, :original, :source, :url, :reported, :headline, :summary, :desk, :state, :published)
+                INSERT OR IGNORE INTO stories (id, original, source, url, reported, headline, summary, desk)
+                VALUES (:id, :original, :source, :url, :reported, :headline, :summary, :desk)
             """, rows)
-            message = f"{len(rows)} {'stories queued for upload' if publish else 'drafts added'}"
+            message = f"{len(rows)} drafts sent for review"
             if len(rows) < TARGET_STORIES:
                 message += f" · fewer than {TARGET_STORIES} fresh stories available"
             if errors:
@@ -147,5 +144,5 @@ def ingest(publish=False):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--publish", action="store_true", help="Approve stories collected in this run")
-    ingest(publish=parser.parse_args().publish)
+    parser.parse_args()
+    ingest()
