@@ -1,0 +1,9 @@
+[Unit]
+Description=Collect Google News tech headlines and draft copy with Codex
+
+[Service]
+Type=oneshot
+WorkingDirectory=%h/news_bot
+EnvironmentFile=-%h/.config/tech-news/shared.env
+Environment=CODEX_BIN=%h/.local/bin/codex
+ExecStart=/usr/bin/python3 collector.py
