@@ -20,3 +20,20 @@ journalctl --user -u tech-news-ingest.service -n 30
 ```
 
 The timer runs at the start of each hour. The dashboard reports the most recent run. To keep user services running across logout and reboot, the Oracle administrator can run `sudo loginctl enable-linger opc` (replace `opc` with the service username if different). If you already scheduled the earlier combined version, stop its scheduler before enabling this one.
+
+## Public frontend
+
+This repository owns the Market Ledger public frontend in `site/`, including
+the October market review. The private editor lives in
+[newspaper_dashboard](https://github.com/mahmudrafi24/newspaper_dashboard)
+and reads these same frontend files on Oracle when exporting published stories.
+
+- **Cloudflare Workers** — connect this repository in Workers Builds and use
+  `npx wrangler deploy`. The committed Wrangler config targets the existing
+  `newspaper-dashboard` Worker and deploys only `site/`.
+- **Cloudflare Pages** — use `sh build-pages.sh` and set the output directory
+  to `public`.
+
+These builds serve the static edition. If Oracle manages story publishing,
+disable automatic production deployments after the initial deployment. Use the
+editor’s Cloudflare deployment settings to publish future exports from Oracle.
