@@ -86,3 +86,6 @@ button{border:1px solid var(--accent);border-radius:5px;background:white;color:v
 .share-controls input{max-width:min(100%,28rem)}
 .share-controls input[hidden]{display:none}
 .share-controls span{font-size:.85rem;color:var(--accent)}
+
+.edition .cover h1{font-size:clamp(2.25rem,6vw,4.8rem);margin:.45rem 0 1rem}
+.edition .cover p:not(.meta){max-width:56ch}
