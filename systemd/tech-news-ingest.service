@@ -1,5 +1,5 @@
 [Unit]
-Description=Collect Google News tech headlines and draft copy with Codex
+Description=Collect Google News market headlines and draft copy with Codex
 
 [Service]
 Type=oneshot

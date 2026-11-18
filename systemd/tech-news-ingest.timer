@@ -1,5 +1,5 @@
 [Unit]
-Description=Collect tech news every hour
+Description=Collect market news every hour
 
 [Timer]
 OnCalendar=hourly
